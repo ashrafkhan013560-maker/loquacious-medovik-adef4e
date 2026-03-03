@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shaadi Mubarak India - Business Portal</title>
+    <style>
+        body { background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%); font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        #overlay { position: fixed; inset: 0; background: rgba(136, 14, 79, 0.98); z-index: 2000; display: flex; justify-content: center; align-items: center; padding: 10px; }
+        .reg-card { background: white; padding: 25px; border-radius: 20px; width: 100%; max-width: 380px; border: 3px solid #D4AF37; box-shadow: 0 0 25px #D4AF37; }
+        .main-app { width: 95%; max-width: 1100px; height: 90vh; background: rgba(255,255,255,0.25); backdrop-filter: blur(15px); border: 2px solid #D4AF37; border-radius: 25px; display: none; overflow: hidden; }
+        .sidebar { width: 280px; background: rgba(255,255,255,0.4); border-right: 2px solid #D4AF37; display: flex; flex-direction: column; overflow-y: auto; }
+        .cat-head { padding: 8px; background: #880e4f; color: gold; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+        .chat-area { flex: 1; display: flex; flex-direction: column; }
+        #messages { flex: 1; overflow-y: auto; padding: 15px; list-style: none; display: flex; flex-direction: column; }
+        .msg { max-width: 75%; padding: 10px; margin-bottom: 8px; border-radius: 12px; font-size: 14px; }
+        .sent { background: gold; align-self: flex-end; }
+        .received { background: white; align-self: flex-start; border: 1px solid #f8bbd0; }
+        input, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #D4AF37; border-radius: 8px; }
+        .btn-gold { background: #D4AF37; color: #880e4f; border: none; padding: 12px; border-radius: 20px; font-weight: bold; cursor: pointer; width: 100%; }
+        #recaptcha-container { margin: 10px 0; }
+    </style>
+</head>
+<body>
+
+<div id="overlay">
+    <div class="reg-card">
+        <h2 style="color:#880e4f; text-align:center; margin:0 0 10px 0;">Shaadi Mubarak India</h2>
+        
+        <div id="otp-step">
+            <input type="tel" id="pPhone" placeholder="+91 9876543210">
+            <div id="recaptcha-container"></div>
+            <button onclick="sendOTP()" class="btn-gold">SEND OTP</button>
+            <div id="verify-box" style="display:none;">
+                <input type="number" id="otpCode" placeholder="Enter 6-digit OTP">
+                <button onclick="verifyOTP()" class="btn-gold" style="background:#880e4f; color:white;">VERIFY & CONTINUE</button>
+            </div>
+        </div>
+
+        <form id="regForm" style="display:none;">
+            <select id="role" onchange="toggleForm()" required>
+                <option value="partner">Looking for Partner</option>
+                <option value="vendor">Wedding Service Vendor</option>
+            </select>
+            <input type="text" id="pName" placeholder="Full Name" required>
+            <div id="partnerFields">
+                <input type="number" id="pAge" placeholder="Age">
+                <input type="text" id="pCaste" placeholder="Caste/Religion">
+            </div>
+            <div id="vendorFields" style="display:none;">
+                <input type="text" id="vBrand" placeholder="Business Name">
+                <select id="vCategory">
+                    <option value="Caterer">Caterer</option>
+                    <option value="Photographer">Photographer</option>
+                    <option value="Makeup">Makeup Artist</option>
+                    <option value="Decorator">Decorator</option>
+                </select>
+            </div>
+            <input type="text" id="pCity" placeholder="City" required>
+            <button type="submit" class="btn-gold">JOIN PLATFORM</button>
+        </form>
+    </div>
+</div>
+
+<div class="main-app" id="app">
+    <div class="sidebar">
+        <div style="padding:10px; background:gold; color:#880e4f; font-weight:bold; text-align:center;">💎 PARTNERS</div>
+        <div id="u-list"></div>
+        <div id="v-sections"></div>
+    </div>
+    <div class="chat-area">
+        <ul id="messages"></ul>
+        <div style="padding:10px; display:flex; gap:10px; background:white; border-top:1px solid #D4AF37;">
+            <input id="chatIn" placeholder="Type message..." style="flex:1; border-radius:20px; border:1px solid gold; padding:10px;">
+            <button onclick="sendMsg()" class="btn-gold" style="width:70px;">Send</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+
+<script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAC_dFj3OkzaQ6h5gvSEUiCrK24Xp18RJ8",
+      authDomain: "shaadimubarakindiachat-57d06.firebaseapp.com",
+      projectId: "shaadimubarakindiachat-57d06",
+      storageBucket: "shaadimubarakindiachat-57d06.firebasestorage.app",
+      messagingSenderId: "231293668017",
+      appId: "1:231293668017:web:722de0b846b1c584bfb090"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+    let confirmationResult;
+    let myUser = ""; let myRole = "";
+
+    // OTP LOGIC
+    window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', { size: 'small' });
+
+    async function sendOTP() {
+        const phone = document.getElementById('pPhone').value;
+        auth.signInWithPhoneNumber(phone, window.recaptchaVerifier).then(res => {
+            confirmationResult = res;
+            document.getElementById('verify-box').style.display = 'block';
+            alert("OTP Sent!");
+        }).catch(err => alert(err.message));
+    }
+
+    async function verifyOTP() {
+        const code = document.getElementById('otpCode').value;
+        confirmationResult.confirm(code).then(() => {
+            document.getElementById('otp-step').style.display = 'none';
+            document.getElementById('regForm').style.display = 'block';
+        }).catch(() => alert("Invalid OTP!"));
+    }
+
+    function toggleForm() {
+        const r = document.getElementById('role').value;
+        document.getElementById('partnerFields').style.display = r === 'partner' ? 'block' : 'none';
+        document.getElementById('vendorFields').style.display = r === 'vendor' ? 'block' : 'none';
+    }
+
+    document.getElementById('regForm').onsubmit = async (e) => {
+        e.preventDefault();
+        myUser = document.getElementById('pName').value;
+        myRole = document.getElementById('role').value;
+        const data = { 
+            name: myUser, 
+            city: document.getElementById('pCity').value, 
+            role: myRole,
+            category: myRole === 'vendor' ? document.getElementById('vCategory').value : 'Partner'
+        };
+        await db.collection(myRole === 'partner' ? 'users' : 'vendors').doc(myUser).set(data);
+        document.getElementById('overlay').style.display = 'none';
+        document.getElementById('app').style.display = 'flex';
+        syncData();
+    };
+
+    function syncData() {
+        db.collection("users").onSnapshot(s => {
+            let h = ""; s.forEach(d => { h += `<div style="padding:8px; border-bottom:1px solid #ddd; font-size:13px;">👤 ${d.data().name}</div>`; });
+            document.getElementById('u-list').innerHTML = h;
+        });
+
+        db.collection("vendors").onSnapshot(s => {
+            let cats = { Caterer: "", Photographer: "", Makeup: "", Decorator: "" };
+            s.forEach(d => { 
+                const v = d.data();
+                if(cats[v.category] !== undefined) cats[v.category] += `<div style="padding:5px 15px; font-size:12px;">✅ ${v.name}</div>`;
+            });
+            let finalH = "";
+            for(let key in cats) {
+                finalH += `<div class="cat-head">${key}</div>${cats[key]}`;
+            }
+            document.getElementById('v-sections').innerHTML = finalH;
+        });
+
+        db.collection("messages").orderBy("time","asc").onSnapshot(s => {
+            let l = document.getElementById('messages'); l.innerHTML = "";
+            s.forEach(d => { l.innerHTML += `<li class="msg ${d.data().u==myUser?'sent':'received'}">${d.data().t}</li>`; });
+            l.scrollTop = l.scrollHeight;
+        });
+    }
+
+    async function sendMsg() {
+        let i = document.getElementById('chatIn');
+        if(!i.value) return;
+        await db.collection("messages").add({ t: i.value, u: myUser, time: firebase.firestore.FieldValue.serverTimestamp() });
+        i.value = "";async function sendMsg() {
+    let inp = document.getElementById('chatIn');
+    let coll = myRole === 'partner' ? 'users' : 'vendors';
+    let snap = await db.collection(coll).doc(myUser).get();
+    
+    // 5 Message Check
+    if(snap.data().count >= 5 && !snap.data().isPremium) {
+        alert("Aapki 5 free messages ki limit khatam ho gayi hai! Unlimited chat ke liye Premium membership lein.");
+        showPaymentPopup(); // Ye function payment dikhayega
+        return;
+    }
+    
+    if(!inp.value) return;
+    await db.collection("messages").add({ t: inp.value, u: myUser, time: firebase.firestore.FieldValue.serverTimestamp() });
+    await db.collection(coll).doc(myUser).update({ count: snap.data().count + 1 });
+    inp.value = "";
+}
+
+function showPaymentPopup() {
+    // Ek sundar sa alert ya modal dikhane ke liye
+    let payHTML = `
+    <div id="payModal" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:3000; display:flex; justify-content:center; align-items:center;">
+        <div style="background:white; padding:30px; border-radius:20px; text-align:center; border:3px solid gold;">
+            <h2 style="color:#880e4f;">Unlock Unlimited Chat</h2>
+            <p>Sirf ₹99 mein poore mahine ke liye!</p>
+            <img src="YOUR_QR_CODE_IMAGE_URL" style="width:200px; margin:10px;">
+            <p><b>UPI ID: aapka-name@upi</b></p>
+            <button onclick="document.getElementById('payModal').remove()" class="btn-gold">Baad mein karunga</button>
+        </div>
+    </div>`;
+    document.body.insertAdjacentHTML('beforeend', payHTML);
+}
+    }
+</script>
+</body>
+</html>
