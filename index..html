@@ -1,206 +1,657 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shaadi Mubarak India - Business Portal</title>
-    <style>
-        body { background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%); font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
-        #overlay { position: fixed; inset: 0; background: rgba(136, 14, 79, 0.98); z-index: 2000; display: flex; justify-content: center; align-items: center; padding: 10px; }
-        .reg-card { background: white; padding: 25px; border-radius: 20px; width: 100%; max-width: 380px; border: 3px solid #D4AF37; box-shadow: 0 0 25px #D4AF37; }
-        .main-app { width: 95%; max-width: 1100px; height: 90vh; background: rgba(255,255,255,0.25); backdrop-filter: blur(15px); border: 2px solid #D4AF37; border-radius: 25px; display: none; overflow: hidden; }
-        .sidebar { width: 280px; background: rgba(255,255,255,0.4); border-right: 2px solid #D4AF37; display: flex; flex-direction: column; overflow-y: auto; }
-        .cat-head { padding: 8px; background: #880e4f; color: gold; font-size: 12px; font-weight: bold; text-transform: uppercase; }
-        .chat-area { flex: 1; display: flex; flex-direction: column; }
-        #messages { flex: 1; overflow-y: auto; padding: 15px; list-style: none; display: flex; flex-direction: column; }
-        .msg { max-width: 75%; padding: 10px; margin-bottom: 8px; border-radius: 12px; font-size: 14px; }
-        .sent { background: gold; align-self: flex-end; }
-        .received { background: white; align-self: flex-start; border: 1px solid #f8bbd0; }
-        input, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #D4AF37; border-radius: 8px; }
-        .btn-gold { background: #D4AF37; color: #880e4f; border: none; padding: 12px; border-radius: 20px; font-weight: bold; cursor: pointer; width: 100%; }
-        #recaptcha-container { margin: 10px 0; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Frontline Command 3D - 15 Stages</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: Inter, Arial, sans-serif;
+      background: #090d16;
+      color: #ecf1ff;
+    }
+    #hud {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      background: rgba(7, 14, 30, 0.8);
+      border: 1px solid #4f6a9a;
+      border-radius: 12px;
+      z-index: 5;
+      backdrop-filter: blur(6px);
+      font-weight: 700;
+    }
+    .muted { font-weight: 500; color: #b9c8ea; font-size: 12px; }
+    #panel {
+      position: fixed;
+      bottom: 12px;
+      left: 12px;
+      max-width: 420px;
+      padding: 10px 14px;
+      background: rgba(7, 14, 30, 0.8);
+      border: 1px solid #4f6a9a;
+      border-radius: 12px;
+      z-index: 5;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    #overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 7;
+      display: grid;
+      place-items: center;
+      background: rgba(3, 7, 15, 0.86);
+      padding: 20px;
+    }
+    #overlay.hidden { display: none; }
+    .card {
+      width: min(760px, 100%);
+      border-radius: 16px;
+      border: 1px solid #4f6a9a;
+      background: linear-gradient(180deg, #0d1730 0%, #0a1224 100%);
+      padding: 24px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+    }
+    h1, h2 { margin: 0 0 12px; }
+    button {
+      border: none;
+      border-radius: 999px;
+      background: #ffd65c;
+      color: #101010;
+      font-weight: 800;
+      padding: 12px 20px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    ul { margin: 8px 0 0 18px; }
+  </style>
 </head>
 <body>
+  <div id="hud">
+    <div>Stage <span id="stageOut">1</span>/15</div>
+    <div>Health: <span id="healthOut">100</span></div>
+    <div>Cities Captured: <span id="citiesOut">0</span>/3</div>
+    <div>Enemy Forces: <span id="enemyOut">0</span></div>
+    <div class="muted">WASD move • Shift boost • Space missile • Mouse drag camera</div>
+  </div>
 
-<div id="overlay">
-    <div class="reg-card">
-        <h2 style="color:#880e4f; text-align:center; margin:0 0 10px 0;">Shaadi Mubarak India</h2>
-        
-        <div id="otp-step">
-            <input type="tel" id="pPhone" placeholder="+91 9876543210">
-            <div id="recaptcha-container"></div>
-            <button onclick="sendOTP()" class="btn-gold">SEND OTP</button>
-            <div id="verify-box" style="display:none;">
-                <input type="number" id="otpCode" placeholder="Enter 6-digit OTP">
-                <button onclick="verifyOTP()" class="btn-gold" style="background:#880e4f; color:white;">VERIFY & CONTINUE</button>
-            </div>
-        </div>
+  <div id="panel">
+    <b>Mission:</b> Lead your coalition through 15 3D stages. Control land, border, and sea-route zones,
+    neutralize hostile units (soldiers, tanks, jets, missile launchers), and secure all cities.
+  </div>
 
-        <form id="regForm" style="display:none;">
-            <select id="role" onchange="toggleForm()" required>
-                <option value="partner">Looking for Partner</option>
-                <option value="vendor">Wedding Service Vendor</option>
-            </select>
-            <input type="text" id="pName" placeholder="Full Name" required>
-            <div id="partnerFields">
-                <input type="number" id="pAge" placeholder="Age">
-                <input type="text" id="pCaste" placeholder="Caste/Religion">
-            </div>
-            <div id="vendorFields" style="display:none;">
-                <input type="text" id="vBrand" placeholder="Business Name">
-                <select id="vCategory">
-                    <option value="Caterer">Caterer</option>
-                    <option value="Photographer">Photographer</option>
-                    <option value="Makeup">Makeup Artist</option>
-                    <option value="Decorator">Decorator</option>
-                </select>
-            </div>
-            <input type="text" id="pCity" placeholder="City" required>
-            <button type="submit" class="btn-gold">JOIN PLATFORM</button>
-        </form>
+  <div id="overlay">
+    <div class="card">
+      <h1>Frontline Command 3D</h1>
+      <p>
+        I can’t help build real-world targeted war scenarios against actual countries or groups.
+        This version is a fictional 3D military strategy-action game prototype with 15 stages.
+      </p>
+      <ul>
+        <li>Units: soldiers, tanks, missile launchers, jet planes.</li>
+        <li>Map elements: border lines, sea routes, cities, buildings, and traffic cars.</li>
+        <li>Goal each stage: eliminate enemy forces and capture all 3 cities.</li>
+      </ul>
+      <button id="startBtn">Start Campaign</button>
     </div>
-</div>
+  </div>
 
-<div class="main-app" id="app">
-    <div class="sidebar">
-        <div style="padding:10px; background:gold; color:#880e4f; font-weight:bold; text-align:center;">💎 PARTNERS</div>
-        <div id="u-list"></div>
-        <div id="v-sections"></div>
+  <div id="endOverlay" class="hidden" style="position:fixed;inset:0;z-index:8;display:grid;place-items:center;background:rgba(0,0,0,.84);padding:20px;">
+    <div class="card">
+      <h2 id="endTitle">Campaign Complete</h2>
+      <p id="endText"></p>
+      <button id="restartBtn">Play Again</button>
     </div>
-    <div class="chat-area">
-        <ul id="messages"></ul>
-        <div style="padding:10px; display:flex; gap:10px; background:white; border-top:1px solid #D4AF37;">
-            <input id="chatIn" placeholder="Type message..." style="flex:1; border-radius:20px; border:1px solid gold; padding:10px;">
-            <button onclick="sendMsg()" class="btn-gold" style="width:70px;">Send</button>
-        </div>
-    </div>
-</div>
+  </div>
 
-<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+  <script type="module">
+    import * as THREE from "https://unpkg.com/three@0.165.0/build/three.module.js";
+    import { OrbitControls } from "https://unpkg.com/three@0.165.0/examples/jsm/controls/OrbitControls.js";
 
-<script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyAC_dFj3OkzaQ6h5gvSEUiCrK24Xp18RJ8",
-      authDomain: "shaadimubarakindiachat-57d06.firebaseapp.com",
-      projectId: "shaadimubarakindiachat-57d06",
-      storageBucket: "shaadimubarakindiachat-57d06.firebasestorage.app",
-      messagingSenderId: "231293668017",
-      appId: "1:231293668017:web:722de0b846b1c584bfb090"
+    const stageOut = document.getElementById("stageOut");
+    const healthOut = document.getElementById("healthOut");
+    const citiesOut = document.getElementById("citiesOut");
+    const enemyOut = document.getElementById("enemyOut");
+    const overlay = document.getElementById("overlay");
+    const endOverlay = document.getElementById("endOverlay");
+    const endTitle = document.getElementById("endTitle");
+    const endText = document.getElementById("endText");
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    document.body.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x89b6f1);
+    scene.fog = new THREE.Fog(0x89b6f1, 120, 520);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
+    camera.position.set(0, 95, 130);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enablePan = false;
+    controls.maxPolarAngle = Math.PI / 2.22;
+    controls.minDistance = 45;
+    controls.maxDistance = 180;
+
+    const amb = new THREE.AmbientLight(0xffffff, 0.55);
+    scene.add(amb);
+    const sun = new THREE.DirectionalLight(0xffffff, 0.95);
+    sun.position.set(80, 120, 40);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    scene.add(sun);
+
+    const world = new THREE.Group();
+    scene.add(world);
+
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(520, 520),
+      new THREE.MeshStandardMaterial({ color: 0x527044 })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    world.add(ground);
+
+    const seaRoute = new THREE.Mesh(
+      new THREE.PlaneGeometry(520, 120),
+      new THREE.MeshStandardMaterial({ color: 0x2f6ea2, transparent: true, opacity: 0.9 })
+    );
+    seaRoute.position.set(0, 0.03, -150);
+    seaRoute.rotation.x = -Math.PI / 2;
+    seaRoute.receiveShadow = true;
+    world.add(seaRoute);
+
+    const border = new THREE.LineSegments(
+      new THREE.EdgesGeometry(new THREE.BoxGeometry(390, 1, 390)),
+      new THREE.LineBasicMaterial({ color: 0xffd36a })
+    );
+    border.position.y = 0.65;
+    world.add(border);
+
+    function makeBuilding(x, z, h = 16) {
+      const g = new THREE.Mesh(
+        new THREE.BoxGeometry(12, h, 12),
+        new THREE.MeshStandardMaterial({ color: 0x8a8f9a })
+      );
+      g.position.set(x, h / 2, z);
+      g.castShadow = true;
+      g.receiveShadow = true;
+      world.add(g);
+    }
+
+    function makeRoadCar(x, z, color) {
+      const car = new THREE.Mesh(
+        new THREE.BoxGeometry(5, 2.2, 9),
+        new THREE.MeshStandardMaterial({ color })
+      );
+      car.position.set(x, 1.2, z);
+      car.castShadow = true;
+      car.userData = { speed: 0.22 + Math.random() * 0.15, minX: -180, maxX: 180 };
+      world.add(car);
+      return car;
+    }
+
+    for (let i = 0; i < 26; i++) {
+      makeBuilding(-145 + (i % 6) * 26, 30 + Math.floor(i / 6) * 28, 10 + Math.random() * 32);
+    }
+
+    const cars = [
+      makeRoadCar(-160, 8, 0xd32f2f),
+      makeRoadCar(-70, 8, 0x1976d2),
+      makeRoadCar(30, 8, 0xff9800),
+      makeRoadCar(130, 8, 0x43a047)
+    ];
+
+    function makeCity(name, x, z, color) {
+      const group = new THREE.Group();
+      const base = new THREE.Mesh(
+        new THREE.CylinderGeometry(11, 11, 1.6, 32),
+        new THREE.MeshStandardMaterial({ color })
+      );
+      base.position.y = 0.8;
+      base.receiveShadow = true;
+      group.add(base);
+
+      const tower = new THREE.Mesh(
+        new THREE.CylinderGeometry(3, 4.5, 12, 24),
+        new THREE.MeshStandardMaterial({ color: 0xdfe6f3 })
+      );
+      tower.position.y = 7;
+      tower.castShadow = true;
+      group.add(tower);
+
+      group.position.set(x, 0, z);
+      group.userData = { name, captured: false };
+      world.add(group);
+      return group;
+    }
+
+    const cities = [
+      makeCity("North City", -90, -80, 0x225ea8),
+      makeCity("Harbor City", 0, 95, 0x225ea8),
+      makeCity("Border City", 90, -50, 0x225ea8)
+    ];
+
+    function makePlayerUnit() {
+      const group = new THREE.Group();
+      const body = new THREE.Mesh(
+        new THREE.BoxGeometry(9, 3, 14),
+        new THREE.MeshStandardMaterial({ color: 0x2e7d32 })
+      );
+      body.position.y = 2.2;
+      body.castShadow = true;
+      group.add(body);
+
+      const turret = new THREE.Mesh(
+        new THREE.CylinderGeometry(2.3, 2.3, 3, 20),
+        new THREE.MeshStandardMaterial({ color: 0x558b2f })
+      );
+      turret.rotation.z = Math.PI / 2;
+      turret.position.set(0, 3.9, 2);
+      turret.castShadow = true;
+      group.add(turret);
+
+      const barrel = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.5, 0.5, 7, 12),
+        new THREE.MeshStandardMaterial({ color: 0x424242 })
+      );
+      barrel.rotation.x = Math.PI / 2;
+      barrel.position.set(0, 3.9, 6.5);
+      group.add(barrel);
+
+      group.position.set(0, 0.7, 130);
+      group.userData = { health: 100, speed: 0.8, boost: 1.5 };
+      world.add(group);
+      return group;
+    }
+
+    function makeEnemy(type, x, z) {
+      const group = new THREE.Group();
+      let health = 20;
+      let speed = 0.23;
+      let damage = 8;
+      let color = 0xb71c1c;
+      let scoreValue = 100;
+
+      if (type === "soldier") {
+        const body = new THREE.Mesh(
+          new THREE.CapsuleGeometry(1.3, 3.2, 4, 10),
+          new THREE.MeshStandardMaterial({ color: 0x6d4c41 })
+        );
+        body.castShadow = true;
+        body.position.y = 2.6;
+        group.add(body);
+        health = 14;
+        speed = 0.35;
+        damage = 5;
+        scoreValue = 60;
+      }
+
+      if (type === "tank") {
+        const body = new THREE.Mesh(
+          new THREE.BoxGeometry(9, 3, 13),
+          new THREE.MeshStandardMaterial({ color: 0x8e2424 })
+        );
+        body.position.y = 1.8;
+        body.castShadow = true;
+        group.add(body);
+        health = 30;
+        speed = 0.2;
+        damage = 10;
+        scoreValue = 130;
+      }
+
+      if (type === "missile") {
+        const launcher = new THREE.Mesh(
+          new THREE.BoxGeometry(5, 5, 5),
+          new THREE.MeshStandardMaterial({ color: 0x4e342e })
+        );
+        launcher.position.y = 2.8;
+        launcher.castShadow = true;
+        group.add(launcher);
+        const tube = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.5, 0.5, 8, 10),
+          new THREE.MeshStandardMaterial({ color: 0x263238 })
+        );
+        tube.rotation.x = Math.PI / 2.5;
+        tube.position.set(0, 5.2, 1.2);
+        group.add(tube);
+        health = 22;
+        speed = 0.16;
+        damage = 14;
+        scoreValue = 160;
+      }
+
+      if (type === "jet") {
+        const fuselage = new THREE.Mesh(
+          new THREE.ConeGeometry(2, 14, 14),
+          new THREE.MeshStandardMaterial({ color: 0x1e3a5f })
+        );
+        fuselage.rotation.x = Math.PI / 2;
+        fuselage.position.y = 26;
+        fuselage.castShadow = true;
+        group.add(fuselage);
+        const wing = new THREE.Mesh(
+          new THREE.BoxGeometry(15, 0.8, 4),
+          new THREE.MeshStandardMaterial({ color: 0x2f4f77 })
+        );
+        wing.position.set(0, 26, 0);
+        group.add(wing);
+        health = 18;
+        speed = 0.55;
+        damage = 12;
+        scoreValue = 180;
+        color = 0x2f4f77;
+      }
+
+      group.position.set(x, type === "jet" ? 0 : 0.4, z);
+      group.userData = {
+        type,
+        health,
+        maxHealth: health,
+        speed,
+        damage,
+        fireCooldown: 1800 * Math.random(),
+        scoreValue,
+        color
+      };
+      world.add(group);
+      return group;
+    }
+
+    const projectiles = [];
+    const enemies = [];
+    const keys = new Set();
+
+    const player = makePlayerUnit();
+
+    const game = {
+      stage: 1,
+      maxStages: 15,
+      citiesCaptured: 0,
+      running: false,
+      score: 0
     };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const auth = firebase.auth();
-    let confirmationResult;
-    let myUser = ""; let myRole = "";
 
-    // OTP LOGIC
-    window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', { size: 'small' });
+    function spawnStage(stageNumber) {
+      while (enemies.length) {
+        const e = enemies.pop();
+        world.remove(e);
+      }
+      while (projectiles.length) {
+        const p = projectiles.pop();
+        world.remove(p.mesh);
+      }
+      cities.forEach((city) => {
+        city.userData.captured = false;
+        city.children[0].material.color.setHex(0x225ea8);
+      });
+      game.citiesCaptured = 0;
+      citiesOut.textContent = "0";
 
-    async function sendOTP() {
-        const phone = document.getElementById('pPhone').value;
-        auth.signInWithPhoneNumber(phone, window.recaptchaVerifier).then(res => {
-            confirmationResult = res;
-            document.getElementById('verify-box').style.display = 'block';
-            alert("OTP Sent!");
-        }).catch(err => alert(err.message));
+      const soldiers = 4 + stageNumber;
+      const tanks = Math.floor(stageNumber / 2) + 1;
+      const missiles = Math.floor(stageNumber / 3) + 1;
+      const jets = Math.floor(stageNumber / 4) + 1;
+
+      const spawn = (type, count, areaZ) => {
+        for (let i = 0; i < count; i++) {
+          enemies.push(makeEnemy(type, -160 + Math.random() * 320, areaZ + Math.random() * 110));
+        }
+      };
+
+      spawn("soldier", soldiers, -120);
+      spawn("tank", tanks, -40);
+      spawn("missile", missiles, 20);
+      spawn("jet", jets, -160);
+
+      player.position.set(0, 0.7, 130);
+      player.userData.health = 100;
+      stageOut.textContent = String(stageNumber);
+      healthOut.textContent = "100";
+      enemyOut.textContent = String(enemies.length);
     }
 
-    async function verifyOTP() {
-        const code = document.getElementById('otpCode').value;
-        confirmationResult.confirm(code).then(() => {
-            document.getElementById('otp-step').style.display = 'none';
-            document.getElementById('regForm').style.display = 'block';
-        }).catch(() => alert("Invalid OTP!"));
+    function launchMissile(from, target, speed, damage, friendly) {
+      const mesh = new THREE.Mesh(
+        new THREE.SphereGeometry(0.9, 10, 10),
+        new THREE.MeshStandardMaterial({ color: friendly ? 0xfff176 : 0xff7043 })
+      );
+      mesh.position.copy(from);
+      mesh.castShadow = true;
+      world.add(mesh);
+      const dir = new THREE.Vector3().subVectors(target, from).normalize();
+      projectiles.push({ mesh, dir, speed, damage, friendly, life: 3.6 });
     }
 
-    function toggleForm() {
-        const r = document.getElementById('role').value;
-        document.getElementById('partnerFields').style.display = r === 'partner' ? 'block' : 'none';
-        document.getElementById('vendorFields').style.display = r === 'vendor' ? 'block' : 'none';
+    function updatePlayer(delta) {
+      let dirX = 0;
+      let dirZ = 0;
+      if (keys.has("KeyW")) dirZ -= 1;
+      if (keys.has("KeyS")) dirZ += 1;
+      if (keys.has("KeyA")) dirX -= 1;
+      if (keys.has("KeyD")) dirX += 1;
+
+      const len = Math.hypot(dirX, dirZ) || 1;
+      dirX /= len;
+      dirZ /= len;
+
+      const speed = player.userData.speed * (keys.has("ShiftLeft") ? player.userData.boost : 1);
+      player.position.x += dirX * speed * delta * 65;
+      player.position.z += dirZ * speed * delta * 65;
+      player.position.x = THREE.MathUtils.clamp(player.position.x, -190, 190);
+      player.position.z = THREE.MathUtils.clamp(player.position.z, -190, 190);
+
+      if (len > 0.1) {
+        player.rotation.y = Math.atan2(dirX, dirZ);
+      }
+
+      controls.target.lerp(new THREE.Vector3(player.position.x, 2.5, player.position.z), 0.08);
+
+      if (keys.has("Space") && player.userData.missileCooldown <= 0) {
+        const nearest = enemies
+          .slice()
+          .sort((a, b) => player.position.distanceTo(a.position) - player.position.distanceTo(b.position))[0];
+        if (nearest) {
+          launchMissile(
+            player.position.clone().add(new THREE.Vector3(0, 4, 0)),
+            nearest.position.clone().add(new THREE.Vector3(0, nearest.userData.type === "jet" ? 26 : 2, 0)),
+            72,
+            18,
+            true
+          );
+          player.userData.missileCooldown = 0.45;
+        }
+      }
+
+      player.userData.missileCooldown = Math.max(0, (player.userData.missileCooldown || 0) - delta);
     }
 
-    document.getElementById('regForm').onsubmit = async (e) => {
-        e.preventDefault();
-        myUser = document.getElementById('pName').value;
-        myRole = document.getElementById('role').value;
-        const data = { 
-            name: myUser, 
-            city: document.getElementById('pCity').value, 
-            role: myRole,
-            category: myRole === 'vendor' ? document.getElementById('vCategory').value : 'Partner'
-        };
-        await db.collection(myRole === 'partner' ? 'users' : 'vendors').doc(myUser).set(data);
-        document.getElementById('overlay').style.display = 'none';
-        document.getElementById('app').style.display = 'flex';
-        syncData();
-    };
+    function updateCities() {
+      let captured = 0;
+      cities.forEach((city) => {
+        const d = city.position.distanceTo(player.position);
+        if (!city.userData.captured && d < 16) {
+          city.userData.captured = true;
+          city.children[0].material.color.setHex(0x2e7d32);
+        }
+        if (city.userData.captured) captured += 1;
+      });
+      game.citiesCaptured = captured;
+      citiesOut.textContent = String(captured);
+    }
 
-    function syncData() {
-        db.collection("users").onSnapshot(s => {
-            let h = ""; s.forEach(d => { h += `<div style="padding:8px; border-bottom:1px solid #ddd; font-size:13px;">👤 ${d.data().name}</div>`; });
-            document.getElementById('u-list').innerHTML = h;
-        });
+    function enemyAttack(enemy, delta) {
+      enemy.userData.fireCooldown -= delta * 1000;
+      if (enemy.userData.fireCooldown > 0) return;
+      enemy.userData.fireCooldown = 1400 + Math.random() * 900;
 
-        db.collection("vendors").onSnapshot(s => {
-            let cats = { Caterer: "", Photographer: "", Makeup: "", Decorator: "" };
-            s.forEach(d => { 
-                const v = d.data();
-                if(cats[v.category] !== undefined) cats[v.category] += `<div style="padding:5px 15px; font-size:12px;">✅ ${v.name}</div>`;
-            });
-            let finalH = "";
-            for(let key in cats) {
-                finalH += `<div class="cat-head">${key}</div>${cats[key]}`;
+      const from = enemy.position.clone().add(new THREE.Vector3(0, enemy.userData.type === "jet" ? 26 : 3, 0));
+      const to = player.position.clone().add(new THREE.Vector3(0, 2, 0));
+      launchMissile(from, to, enemy.userData.type === "jet" ? 66 : 54, enemy.userData.damage, false);
+    }
+
+    function updateEnemies(delta) {
+      enemies.forEach((enemy) => {
+        const p = enemy.position;
+        const target = player.position;
+
+        if (enemy.userData.type === "jet") {
+          p.y = 0;
+          p.x += Math.sin(performance.now() * 0.001 + p.z * 0.1) * enemy.userData.speed * 18 * delta;
+          p.z += enemy.userData.speed * 42 * delta;
+          if (p.z > 190) p.z = -190;
+          enemy.rotation.y = Math.PI;
+        } else {
+          const dir = new THREE.Vector3(target.x - p.x, 0, target.z - p.z).normalize();
+          p.x += dir.x * enemy.userData.speed * 42 * delta;
+          p.z += dir.z * enemy.userData.speed * 42 * delta;
+          enemy.rotation.y = Math.atan2(dir.x, dir.z);
+        }
+
+        const dist = player.position.distanceTo(enemy.position);
+        if (dist < 7) {
+          player.userData.health = Math.max(0, player.userData.health - enemy.userData.damage * delta * 0.65);
+          healthOut.textContent = String(Math.floor(player.userData.health));
+        }
+
+        enemyAttack(enemy, delta);
+      });
+    }
+
+    function updateProjectiles(delta) {
+      for (let i = projectiles.length - 1; i >= 0; i--) {
+        const p = projectiles[i];
+        p.life -= delta;
+        p.mesh.position.addScaledVector(p.dir, p.speed * delta);
+
+        if (p.friendly) {
+          for (let j = enemies.length - 1; j >= 0; j--) {
+            const e = enemies[j];
+            const hitHeight = e.userData.type === "jet" ? 26 : 2;
+            const targetPoint = e.position.clone().add(new THREE.Vector3(0, hitHeight, 0));
+            if (p.mesh.position.distanceTo(targetPoint) < (e.userData.type === "jet" ? 6 : 4)) {
+              e.userData.health -= p.damage;
+              world.remove(p.mesh);
+              projectiles.splice(i, 1);
+              if (e.userData.health <= 0) {
+                world.remove(e);
+                enemies.splice(j, 1);
+                enemyOut.textContent = String(enemies.length);
+              }
+              break;
             }
-            document.getElementById('v-sections').innerHTML = finalH;
-        });
+          }
+        } else {
+          const d = p.mesh.position.distanceTo(player.position.clone().add(new THREE.Vector3(0, 2, 0)));
+          if (d < 4.2) {
+            player.userData.health = Math.max(0, player.userData.health - p.damage);
+            healthOut.textContent = String(Math.floor(player.userData.health));
+            world.remove(p.mesh);
+            projectiles.splice(i, 1);
+            continue;
+          }
+        }
 
-        db.collection("messages").orderBy("time","asc").onSnapshot(s => {
-            let l = document.getElementById('messages'); l.innerHTML = "";
-            s.forEach(d => { l.innerHTML += `<li class="msg ${d.data().u==myUser?'sent':'received'}">${d.data().t}</li>`; });
-            l.scrollTop = l.scrollHeight;
-        });
+        if (p.life <= 0) {
+          world.remove(p.mesh);
+          projectiles.splice(i, 1);
+        }
+      }
     }
 
-    async function sendMsg() {
-        let i = document.getElementById('chatIn');
-        if(!i.value) return;
-        await db.collection("messages").add({ t: i.value, u: myUser, time: firebase.firestore.FieldValue.serverTimestamp() });
-        i.value = "";async function sendMsg() {
-    let inp = document.getElementById('chatIn');
-    let coll = myRole === 'partner' ? 'users' : 'vendors';
-    let snap = await db.collection(coll).doc(myUser).get();
-    
-    // 5 Message Check
-    if(snap.data().count >= 5 && !snap.data().isPremium) {
-        alert("Aapki 5 free messages ki limit khatam ho gayi hai! Unlimited chat ke liye Premium membership lein.");
-        showPaymentPopup(); // Ye function payment dikhayega
+    function updateCars(delta) {
+      cars.forEach((car) => {
+        car.position.x += car.userData.speed * 36 * delta;
+        if (car.position.x > car.userData.maxX) car.position.x = car.userData.minX;
+      });
+    }
+
+    function checkStageProgress() {
+      if (player.userData.health <= 0) {
+        endTitle.textContent = "Defeat";
+        endText.textContent = `You were defeated on Stage ${game.stage}. Try again and secure all zones.`;
+        endOverlay.classList.remove("hidden");
+        endOverlay.style.display = "grid";
+        game.running = false;
         return;
-    }
-    
-    if(!inp.value) return;
-    await db.collection("messages").add({ t: inp.value, u: myUser, time: firebase.firestore.FieldValue.serverTimestamp() });
-    await db.collection(coll).doc(myUser).update({ count: snap.data().count + 1 });
-    inp.value = "";
-}
+      }
 
-function showPaymentPopup() {
-    // Ek sundar sa alert ya modal dikhane ke liye
-    let payHTML = `
-    <div id="payModal" style="position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:3000; display:flex; justify-content:center; align-items:center;">
-        <div style="background:white; padding:30px; border-radius:20px; text-align:center; border:3px solid gold;">
-            <h2 style="color:#880e4f;">Unlock Unlimited Chat</h2>
-            <p>Sirf ₹99 mein poore mahine ke liye!</p>
-            <img src="YOUR_QR_CODE_IMAGE_URL" style="width:200px; margin:10px;">
-            <p><b>UPI ID: aapka-name@upi</b></p>
-            <button onclick="document.getElementById('payModal').remove()" class="btn-gold">Baad mein karunga</button>
-        </div>
-    </div>`;
-    document.body.insertAdjacentHTML('beforeend', payHTML);
-}
+      if (enemies.length === 0 && game.citiesCaptured === 3) {
+        if (game.stage >= game.maxStages) {
+          endTitle.textContent = "Campaign Complete";
+          endText.textContent = "All 15 stages cleared. Full strategic control achieved.";
+          endOverlay.classList.remove("hidden");
+          endOverlay.style.display = "grid";
+          game.running = false;
+        } else {
+          game.stage += 1;
+          spawnStage(game.stage);
+        }
+      }
     }
-</script>
+
+    function resetGame() {
+      game.stage = 1;
+      game.running = true;
+      endOverlay.classList.add("hidden");
+      endOverlay.style.display = "none";
+      spawnStage(1);
+    }
+
+    const clock = new THREE.Clock();
+    function animate() {
+      requestAnimationFrame(animate);
+      const delta = Math.min(clock.getDelta(), 0.033);
+
+      if (game.running) {
+        updatePlayer(delta);
+        updateCities();
+        updateEnemies(delta);
+        updateProjectiles(delta);
+        updateCars(delta);
+        checkStageProgress();
+      }
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener("keydown", (e) => {
+      keys.add(e.code);
+      if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) {
+        e.preventDefault();
+      }
+    });
+    window.addEventListener("keyup", (e) => keys.delete(e.code));
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    document.getElementById("startBtn").addEventListener("click", () => {
+      overlay.classList.add("hidden");
+      resetGame();
+    });
+
+    document.getElementById("restartBtn").addEventListener("click", resetGame);
+  </script>
 </body>
 </html>
